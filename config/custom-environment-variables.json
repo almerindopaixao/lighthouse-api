@@ -1,0 +1,9 @@
+{
+    "app": {
+        "port": "PORT",
+        "supabase": {
+          "url": "SUPABASE_URL",
+          "apiKey": "SUPABASE_API_KEY"
+        }
+    }
+}
