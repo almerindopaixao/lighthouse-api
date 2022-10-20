@@ -4,7 +4,7 @@ import { Response } from "express";
 import { ResponseHelper } from '@src/helpers/reponse.helper';
 
 export abstract class BaseController {
-    protected handlerResponseErrorFromSupabase(res: Response, error: any) {
+    protected handlerResponseErrorFromSupabase(res: Response) {
         const responseStatus = StatusCodes.INTERNAL_SERVER_ERROR
         const responseBody = ResponseHelper.makeResponseError(
             responseStatus, 
@@ -14,11 +14,8 @@ export abstract class BaseController {
         return res.status(responseStatus).json(responseBody);
     }
 
-    protected handlerResponseErrorFromPathParams(res: Response, params: string[]) {
+    protected handlerResponseErrorFromUser(res: Response, messageBody: string | string[]) {
         const responseStatus = StatusCodes.BAD_REQUEST
-        const messageBody = params.length === 1 ? 
-            `Parâmetro ${params.join('')} é obrigatório` :
-            `Parâmetros ${params.join(', ')} são obritatórios`;
 
         const responseBody = ResponseHelper.makeResponseError(
             responseStatus, 

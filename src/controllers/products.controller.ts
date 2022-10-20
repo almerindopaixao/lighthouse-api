@@ -1,12 +1,14 @@
 import _ from 'lodash';
 import * as geolib from 'geolib';
-import { Controller, Get } from "@overnightjs/core";
+import { StatusCodes } from 'http-status-codes';
+import { Controller, Get, Post } from "@overnightjs/core";
 import { Request, Response } from "express";
 import { injectable, inject } from 'tsyringe';
 
 import { Database } from '@src/infra/database';
 import { Logger } from '@src/utils/logger';
 import { BaseController } from '@src/controllers/base.controller';
+import { ResponseHelper } from '@src/helpers/reponse.helper';
 
 
 @injectable()
@@ -36,11 +38,49 @@ export class ProductsController extends BaseController {
 
         if (error) { 
             this.logger.error(error);
-            return this.handlerResponseErrorFromSupabase(res, error);
+            return this.handlerResponseErrorFromSupabase(res);
         }
 
 
         return this.handlerResponseSuccess(res, data);
+    }
+
+    @Post('')
+    private async create(req: Request, res: Response) {
+        const errors = await this.validateFieldsToCreateProduct(req.body);
+
+        if (errors.length) return this.handlerResponseErrorFromUser(res, errors);
+
+        const { data: result } = await this.database
+            .from('produtos_supermercados')
+            .select('count')
+            .eq('cnpj', req.body.cnpj)
+            .eq('gtin', req.body.gtin);
+
+            
+        if ((result || [])[0]?.count > 0) return res
+            .status(StatusCodes.CONFLICT)
+            .json(ResponseHelper.makeResponseError(
+                StatusCodes.CONFLICT, 
+                'O produto informado já estar associado ao supermercado'
+                )
+            )
+
+        const { data, error } = await this.database.from('produtos_supermercados').insert({
+            gtin: req.body.gtin,
+            cnpj: req.body.cnpj,
+            preco: req.body.preco,
+            promocao: req.body.promocao,
+            disponivel: req.body.disponivel,
+        });
+
+        if (error) { 
+            this.logger.error(error);
+            return this.handlerResponseErrorFromSupabase(res);
+        }
+
+        
+        return res.status(StatusCodes.CREATED).send();
     }
 
     @Get(':gtin')
@@ -48,7 +88,7 @@ export class ProductsController extends BaseController {
         const { gtin } = req.params;
         const { lat, lng } = req.query;
 
-        if (!lat || !lng) return this.handlerResponseErrorFromPathParams(res, ['lat', 'lng']);
+        if (!lat || !lng) return this.handlerResponseErrorFromUser(res, 'Parâmetros (lat, lng) são obrigatórios');
 
         const { data, error } = await this.database
             .from('produtos')
@@ -72,7 +112,7 @@ export class ProductsController extends BaseController {
 
         if (error) { 
             this.logger.error(error);
-            return this.handlerResponseErrorFromSupabase(res, error);
+            return this.handlerResponseErrorFromSupabase(res);
         }
 
         if (!data?.length) return this.handlerResponseSuccess(res, {});
@@ -118,5 +158,24 @@ export class ProductsController extends BaseController {
             preco_maximo:_.maxBy(itens, (o) => o.preco).preco,
             preco_medio: _.meanBy(itens, (o) => o.preco)
         }
+    }
+
+    private async validateFieldsToCreateProduct(body: any = {}) {
+        const errors = [];
+
+        const requiredFields = ['cnpj', 'gtin', 'preco'];
+
+        const receivedFields = Object.keys(body);
+        const missingFields = requiredFields.filter(field =>!receivedFields.includes(field));
+
+        if (missingFields.length) errors.push(`Campos (${missingFields.join(', ')}) são obrigatórios`);
+
+        const numberFields = ['cnpj', 'gtin', 'preco'];
+
+        const invalidTypeNumberFields = numberFields.filter(field => !_.isNil(body[field]) && isNaN(body[field]));
+
+        if (invalidTypeNumberFields.length) errors.push(`Campos (${invalidTypeNumberFields.join(', ')}) devem conter apenas números`);
+
+        return errors;
     }
 }

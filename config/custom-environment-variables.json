@@ -4,6 +4,11 @@
         "supabase": {
           "url": "SUPABASE_URL",
           "apiKey": "SUPABASE_API_KEY"
+        },
+        "cloudinary": {
+          "name": "CLOUDINARY_NAME",
+          "apiKey": "CLOUDINARY_API_KEY",
+          "apiSecret": "CLOUDINARY_API_SECRET"
         }
     }
 }
