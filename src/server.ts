@@ -3,12 +3,12 @@ import cors from "cors";
 import { Server } from "@overnightjs/core";
 import { container } from 'tsyringe';
 
-import { Database } from '@src/infra/database';
-import { Logger } from '@src/utils/logger';
+import { Database } from './infra/database';
+import { Logger } from './utils/logger';
 
-import { HealthCheckController } from '@src/controllers/health-check.controller';
-import { ProductsController } from '@src/controllers/products.controller';
-import { SupermarketsController } from '@src/controllers/supermarkets.controller';
+import { HealthCheckController } from './controllers/health-check.controller';
+import { ProductsController } from './controllers/products.controller';
+import { SupermarketsController } from './controllers/supermarkets.controller';
 
 export class SetupServer extends Server {
     constructor(private port = 3000) {

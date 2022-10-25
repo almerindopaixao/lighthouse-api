@@ -3,13 +3,13 @@ import { Controller, Middleware, Get, Post } from "@overnightjs/core";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
 import { injectable, inject } from 'tsyringe';
-import cloudinary from "@src/infra/cloudinary";
+import cloudinary from "../infra/cloudinary";
 
-import * as multer from '@src/middlewares/multer.middleware'
-import { Database } from '@src/infra/database';
-import { Logger } from '@src/utils/logger';
-import { BaseController } from '@src/controllers/base.controller';
-import { ResponseHelper } from "@src/helpers/reponse.helper";
+import * as multer from '../middlewares/multer.middleware'
+import { Database } from '../infra/database';
+import { Logger } from '../utils/logger';
+import { BaseController } from './base.controller';
+import { ResponseHelper } from "../helpers/reponse.helper";
 
 @injectable()
 @Controller('supermercados')

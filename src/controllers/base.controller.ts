@@ -1,7 +1,7 @@
 import StatusCodes from 'http-status-codes';
 import { Response } from "express";
 
-import { ResponseHelper } from '@src/helpers/reponse.helper';
+import { ResponseHelper } from '../helpers/reponse.helper';
 
 export abstract class BaseController {
     protected handlerResponseErrorFromSupabase(res: Response) {
