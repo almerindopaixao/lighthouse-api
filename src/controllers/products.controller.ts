@@ -54,8 +54,9 @@ export class ProductsController extends BaseController {
         // encontrar no mínimo 10 produtos em um raio de 1km
         const products: any[] = [];
 
+        const limit = 10;
         let from = 0;
-        let to = 10;
+        let to = limit - 1;
 
         // Distância máxima de 1000 metros ou 1km
         const maxDistance = 1000; 
@@ -100,12 +101,12 @@ export class ProductsController extends BaseController {
 
             products.push(...availableProducts);
 
-            from += to + 1;
-            to += to + 1;
+            from += limit;
+            to += limit;
             
             durationSearch = Date.now() - startTimeSearch;
-            // Enquanto não achar 15 produtos próximos ou tempo ultrapassar 1 minutos
-        } while(products.length < 10 || durationSearch < 60000);
+            // Enquanto não achar no mínimo 10 produtos próximos ou tempo ultrapassar 1 minuto
+        } while(products.length < limit && durationSearch < 60000);
 
         return this.handlerResponseSuccess(res, products);
     }
