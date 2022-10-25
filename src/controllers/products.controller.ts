@@ -45,6 +45,71 @@ export class ProductsController extends BaseController {
         return this.handlerResponseSuccess(res, data);
     }
 
+    @Get('supermercados')
+    private async getAllWithSupermarket(req: Request<{}, {}, {}, { lat: string, lng: string }>, res: Response) {
+        const { lat, lng } = req.query;
+
+        if (!lat || !lng) return this.handlerResponseErrorFromUser(res, 'Parâmetros (lat, lng) são obrigatórios');
+
+        // encontrar no mínimo 10 produtos em um raio de 1km
+        const products: any[] = [];
+
+        let from = 0;
+        let to = 10;
+
+        // Distância máxima de 1000 metros ou 1km
+        const maxDistance = 1000; 
+        const startTimeSearch = Date.now();
+        let durationSearch = 0;
+
+        do {
+            const { data, error } = await this.database
+                .from('produtos_supermercados')
+                .select(`
+                    supermercado:cnpj(latitude, longitude),
+                    produto:gtin(gtin, descricao),
+                    preco
+                `,)
+                .range(from, to);
+
+            if (error) { 
+                this.logger.error(error);
+                return this.handlerResponseErrorFromSupabase(res);
+            }
+            
+            // Sair do laço de repetição pois não existem mais dados
+            if (!data?.length) break;
+
+            const availableProducts = (data as any[]).reduce<any[]>((acc, value) => {
+                const distancia = geolib.getDistance(
+                    { latitude: lat, longitude: lng }, 
+                    { latitude:  value.supermercado?.latitude, longitude: value.supermercado?.longitude }
+                )
+
+                if (distancia > maxDistance) return acc;
+
+                acc.push({
+                    descricao: value.produto?.descricao,
+                    gtin: value.produto?.gtin,
+                    preco: value.preco,
+                    distancia
+                });
+
+                return acc; 
+            }, []);
+
+            products.push(...availableProducts);
+
+            from += to + 1;
+            to += to + 1;
+            
+            durationSearch = Date.now() - startTimeSearch;
+            // Enquanto não achar 15 produtos próximos ou tempo ultrapassar 1 minutos
+        } while(products.length < 10 || durationSearch < 60000);
+
+        return this.handlerResponseSuccess(res, products);
+    }
+
     @Post('')
     private async create(req: Request, res: Response) {
         const errors = await this.validateFieldsToCreateProduct(req.body);
@@ -61,8 +126,8 @@ export class ProductsController extends BaseController {
         if ((result || [])[0]?.count > 0) return res
             .status(StatusCodes.CONFLICT)
             .json(ResponseHelper.makeResponseError(
-                StatusCodes.CONFLICT, 
-                'O produto informado já estar associado ao supermercado'
+                    StatusCodes.CONFLICT, 
+                    'O produto informado já estar associado ao supermercado'
                 )
             )
 
@@ -83,7 +148,7 @@ export class ProductsController extends BaseController {
         return res.status(StatusCodes.CREATED).send();
     }
 
-    @Get(':gtin')
+    @Get(':gtin/supermercados')
     private async getWithSupermarkets(req: Request<{ gtin?: string }, {}, {}, { lat: string, lng: string }>, res: Response) {
         const { gtin } = req.params;
         const { lat, lng } = req.query;
@@ -136,7 +201,7 @@ export class ProductsController extends BaseController {
 
     private calculate_supermercados_regiao(itens: any[], lat: string, lng: string) {
         return itens.map((item) => {
-            const distancia_metros = geolib.getDistance(
+            const distanciaMetros = geolib.getDistance(
                 { latitude: lat, longitude: lng }, 
                 { latitude:  item.supermercado.latitude, longitude: item.supermercado.longitude}
             )
@@ -144,7 +209,7 @@ export class ProductsController extends BaseController {
             return {
                 cnpj: item.supermercado.cnpj,
                 descricao: item.supermercado.descricao,
-                distancia: distancia_metros / 1000,
+                distancia: distanciaMetros / 1000,
                 produto_preco: item.preco,
                 produto_promocao: item.promocao,
                 produto_disponivel: item.disponivel
