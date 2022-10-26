@@ -68,7 +68,7 @@ export class ProductsController extends BaseController {
                 .from('produtos_supermercados')
                 .select(`
                     supermercado:cnpj(latitude, longitude),
-                    produto:gtin(gtin, descricao),
+                    produto:gtin(gtin, descricao, imagem_url),
                     preco
                 `,)
                 .range(from, to);
@@ -93,7 +93,8 @@ export class ProductsController extends BaseController {
                     descricao: value.produto?.descricao,
                     gtin: value.produto?.gtin,
                     preco: value.preco,
-                    distancia
+                    distancia,
+                    imagem_url: value.produto?.imagem_url
                 });
 
                 return acc; 
