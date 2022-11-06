@@ -15,6 +15,7 @@ import { ResponseHelper } from "../helpers/reponse.helper";
 @Controller('supermercados')
 export class SupermarketsController extends BaseController {
     private selectFieldsFromSupermarket: string[] = [
+        'cnpj',
         'descricao', 
         'cidade', 
         'bairro', 
