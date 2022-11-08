@@ -5,6 +5,6 @@ export const upload = multer({
     limits: { fileSize: 1024 * 1024 },
     fileFilter(_, file, cb)  {
         if (file.mimetype.match(/png||jpeg||jpg$i/)) return cb(null, true)
-        cb(null, false);
+        cb(new Error('A imagem enviada não é um tipo de arquivo válido'));
     },
 })
