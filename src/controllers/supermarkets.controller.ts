@@ -1,11 +1,9 @@
 import _ from "lodash";
-import { Controller, Middleware, Get, Post } from "@overnightjs/core";
+import { Controller, Get, Post } from "@overnightjs/core";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
 import { injectable, inject } from 'tsyringe';
-import cloudinary from "../infra/cloudinary";
 
-import * as multer from '../middlewares/multer.middleware'
 import { Database } from '../infra/database';
 import { Logger } from '../utils/logger';
 import { BaseController } from './base.controller';
@@ -78,18 +76,17 @@ export class SupermarketsController extends BaseController {
 
 
     @Post('')
-    @Middleware(multer.upload.single('image'))
     private async create(req: Request, res: Response) {
         const errors = this.validateFieldsToCreateSupermarket(req.body);
 
         if (errors.length) return this.handlerResponseErrorFromUser(res, errors);
 
-        if (!req.file) return res
-            .status(StatusCodes.NOT_FOUND)
-            .json(ResponseHelper.makeResponseError(
-                StatusCodes.NOT_FOUND, 
-                'A imagem não foi enviada')
-            )
+        // if (!req.file) return res
+        //     .status(StatusCodes.NOT_FOUND)
+        //     .json(ResponseHelper.makeResponseError(
+        //         StatusCodes.NOT_FOUND, 
+        //         'A imagem não foi enviada')
+        //     )
 
         const { data: result } = await this.database
             .from('supermercados')
@@ -105,7 +102,7 @@ export class SupermarketsController extends BaseController {
                 )
             )
                 
-        const { url: imagem_url } = await cloudinary.uploader.upload(req.file.path);
+        // const { url: imagem_url } = await cloudinary.uploader.upload(req.file.path);
 
         const { data, error } = await this.database
             .from('supermercados')
@@ -119,8 +116,7 @@ export class SupermarketsController extends BaseController {
                 cep: req.body.cep,
                 latitude: req.body.latitude,
                 longitude: req.body.longitude,
-                numero: req.body.numero,
-                imagem_url,
+                numero: req.body.numero
             })
 
         if (error) { 
