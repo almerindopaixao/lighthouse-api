@@ -84,12 +84,12 @@ export class SupermarketsController extends BaseController {
 
         if (errors.length) return this.handlerResponseErrorFromUser(res, errors);
 
-        // if (!req.file) return res
-        //     .status(StatusCodes.CONFLICT)
-        //     .json(ResponseHelper.makeResponseError(
-        //         StatusCodes.CONFLICT, 
-        //         'A imagem enviada não é um tipo de arquivo válido')
-        //     )
+        if (!req.file) return res
+            .status(StatusCodes.NOT_FOUND)
+            .json(ResponseHelper.makeResponseError(
+                StatusCodes.NOT_FOUND, 
+                'A imagem não foi enviada')
+            )
 
         const { data: result } = await this.database
             .from('supermercados')
@@ -105,7 +105,7 @@ export class SupermarketsController extends BaseController {
                 )
             )
                 
-        // const { url: imagem_url } = await cloudinary.uploader.upload(req.file.path);
+        const { url: imagem_url } = await cloudinary.uploader.upload(req.file.path);
 
         const { data, error } = await this.database
             .from('supermercados')
@@ -119,7 +119,8 @@ export class SupermarketsController extends BaseController {
                 cep: req.body.cep,
                 latitude: req.body.latitude,
                 longitude: req.body.longitude,
-                numero: req.body.numero
+                numero: req.body.numero,
+                imagem_url,
             })
 
         if (error) { 
